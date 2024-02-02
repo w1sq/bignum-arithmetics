@@ -9,6 +9,8 @@ struct BigNum
 {
     BigNum(long long v = 0) { *this = v; }
 
+    BigNum(const std::string &s) { read_from_str(s); }
+
     BigNum &operator=(long long v)
     {
         sign = v < 0 ? -1 : 1;
@@ -18,8 +20,6 @@ struct BigNum
             digits.push_back((int)(v % base));
         return *this;
     }
-
-    BigNum(const std::string &s) { read(s); }
 
     friend BigNum operator-(BigNum v)
     {
@@ -68,7 +68,7 @@ struct BigNum
                     if (carry)
                         digits[i] += base;
                 }
-                trim();
+                remove_zeros();
             }
             else
             {
@@ -101,7 +101,7 @@ struct BigNum
             carry = (int)(cur / base);
             digits[i] = (int)(cur % base);
         }
-        trim();
+        remove_zeros();
         return *this;
     }
 
@@ -135,7 +135,7 @@ private:
     std::vector<int> digits;
     int sign; // 1 for >=0, -1 for <0
 
-    void read(const std::string &s)
+    void read_from_str(const std::string &s)
     {
         sign = 1;
         digits.clear();
@@ -153,10 +153,10 @@ private:
                 x = x * 10 + s[j] - '0';
             digits.push_back(x);
         }
-        trim();
+        remove_zeros();
     }
 
-    void trim()
+    void remove_zeros()
     {
         while (!digits.empty() && digits.back() == 0)
             digits.pop_back();
