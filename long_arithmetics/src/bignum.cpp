@@ -1,5 +1,6 @@
 #include <long_arithmetics.hpp>
 #include <iomanip>
+#include <deque>
 
 constexpr int base = 1000'000'000;
 constexpr int base_digits = 9;
@@ -43,35 +44,53 @@ namespace LongArithmetics
 
     BigNum &BigNum::operator+=(const BigNum &a)
     {
-        // Ensure the vectors are of the same size
-        while (digits.size() < a.digits.size())
-            digits.insert(digits.begin(), 0);
-
-        // Perform addition
-        int carry = 0;
-        for (int i = digits.size() - 1; i >= 0; --i)
+        if (sign == a.sign)
         {
-            digits[i] += (i < a.digits.size() ? a.digits[i] : 0) + carry;
-            carry = (digits[i] >= 10) ? 1 : 0;
-            if (carry)
-                digits[i] -= 10;
+            auto exp2 = a.precision;
+            auto exp = std::max(precision, exp2);
+            std::deque<int> d1(digits.begin(), digits.end());
+            std::deque<int> d2(a.digits.begin(), a.digits.end());
+            while (precision != exp)
+            {
+                d1.push_front(0);
+                ++precision;
+            }
+            while (exp2 != exp)
+            {
+                d2.push_front(0);
+                ++exp2;
+            }
+            size_t size = std::max(d1.size(), d2.size());
+            while (d1.size() != size)
+            {
+                d1.push_back(0);
+            }
+            while (d2.size() != size)
+            {
+                d2.push_back(0);
+            }
+            size_t len = 1 + size;
+            precision = exp + 1;
+            digits = std::vector<int>(len, 0);
+            for (size_t i = 0; i < size; ++i)
+            {
+                digits[i + 1] = d1[i] + d2[i];
+            }
+            for (size_t i = len - 1; i > 0; --i)
+            {
+                digits[i - 1] += digits[i] / 10;
+                digits[i] %= 10;
+            }
+            remove_zeros();
         }
-
-        // If there's still a carry after the last digit, add a new digit
-        if (carry)
-            digits.insert(digits.begin(), 1);
-
-        // Adjust precision
-        if (precision < a.precision)
-            precision = a.precision;
-
-        // Remove leading zeros
-        while (digits.size() > 1 && digits[0] == 0)
-        {
-            digits.erase(digits.begin());
-            --precision;
-        }
-
+        // else if (lhs.sign)
+        // {
+        //     result = rhs - (-(lhs));
+        // }
+        // else
+        // {
+        //     result = lhs - (-rhs);
+        // }
         return *this;
     }
 
@@ -200,15 +219,15 @@ namespace LongArithmetics
         return result;
     }
 
-    bool BigNum::operator<(const BigNum &v) const
+    bool BigNum::operator<(const BigNum &other) const
     {
-        if (sign != v.sign)
-            return sign < v.sign;
-        if (digits.size() != v.digits.size())
-            return digits.size() * sign < v.digits.size() * v.sign;
+        if (sign != other.sign)
+            return sign < other.sign;
+        if (digits.size() != other.digits.size())
+            return digits.size() * sign < other.digits.size() * other.sign;
         for (size_t i = digits.size() - 1; i >= 0; --i)
-            if (digits[i] != v.digits[i])
-                return digits[i] * sign < v.digits[i] * sign;
+            if (digits[i] != other.digits[i])
+                return digits[i] * sign < other.digits[i] * sign;
         return false;
     }
 
@@ -258,7 +277,7 @@ namespace LongArithmetics
 
     std::ostream &operator<<(std::ostream &out, const BigNum &a)
     {
-        if (a.sign < 0)
+        if (a.sign)
         {
             out << '-';
         }

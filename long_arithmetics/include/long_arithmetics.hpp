@@ -42,7 +42,7 @@ namespace LongArithmetics
     private:
         std::vector<int> digits;
         size_t precision;
-        int sign; // 1 for >=0, -1 for <0
+        int sign; // 0 for >=0, 1 for <0
 
         void remove_zeros();
     };

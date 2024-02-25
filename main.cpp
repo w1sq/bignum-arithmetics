@@ -6,7 +6,7 @@ int main()
     using namespace LongArithmetics;
 
     BigNum a("123456789");
-    BigNum b("987654321.011718271673127");
+    BigNum b("987654321");
 
     std::cout << "a = " << a << '\n';
     std::cout << "b = " << b << '\n';
