@@ -6,13 +6,13 @@ int main()
     using namespace LongArithmetics;
 
     BigNum a("123456789");
-    BigNum b("987654321");
+    // BigNum b("987654321");
 
     std::cout << "a = " << a << '\n';
-    std::cout << "b = " << b << '\n';
+    // std::cout << "b = " << b << '\n';
 
-    BigNum sum = a + b;
-    std::cout << "a + b = " << sum << '\n';
+    // BigNum sum = a + b;
+    // std::cout << "a + b = " << sum << '\n';
 
     // BigNum diff = a - b;
     // std::cout << "a - b = " << diff << '\n';
