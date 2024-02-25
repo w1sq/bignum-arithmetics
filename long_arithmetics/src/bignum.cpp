@@ -15,57 +15,24 @@ namespace LongArithmetics
 
     BigNum::BigNum(const std::string &number)
     {
-        sign = 1;
-        precision = 0;
-        std::string integerPart, fractionalPart;
-
-        size_t commaPos = number.find('.');
-        if (commaPos != std::string::npos)
+        size_t i = 0;
+        sign = number[0] == '-' ? ++i : 0;
+        precision = number.size() - i;
+        digits.reserve(precision);
+        while (i < number.size())
         {
-            integerPart = number.substr(0, commaPos);
-            fractionalPart = number.substr(commaPos + 1);
+            if (number[i] == '.')
+            {
+                precision = sign ? i - 1 : i;
+            }
+            else if (isdigit(number[i]))
+            {
+                digits.push_back(number[i] - '0');
+            }
+            ++i;
         }
-        else
-        {
-            integerPart = number;
-        }
-
-        if (integerPart[0] == '-')
-        {
-            sign = -1;
-            integerPart = integerPart.substr(1);
-        }
-
-        for (int i = integerPart.length(); i > 0; i -= base_digits)
-        {
-            if (i < base_digits)
-                digits.push_back(std::stoi(integerPart.substr(0, i)));
-            else
-                digits.push_back(std::stoi(integerPart.substr(i - base_digits, base_digits)));
-        }
-
-        for (int i = 0; i < fractionalPart.length(); i += base_digits)
-        {
-            if (i + base_digits > fractionalPart.length())
-                digits.push_back(std::stoi(fractionalPart.substr(i)));
-            else
-                digits.push_back(std::stoi(fractionalPart.substr(i, base_digits)));
-        }
-        precision = fractionalPart.length();
+        remove_zeros();
     }
-
-    // BigNum::BigNum(long long num, size_t precision)
-    // {
-    //     std::ostringstream strs;
-    //     strs << num;
-    //     std::string str = strs.str();
-
-    //     // Append zeros based on precision
-    //     str.append(precision, '0');
-
-    //     // Use the string constructor
-    //     *this = BigNum(str);
-    // }
 
     BigNum BigNum::operator-() const
     {
@@ -271,37 +238,71 @@ namespace LongArithmetics
 
     void BigNum::remove_zeros()
     {
-        while (!digits.empty() && digits.back() == 0)
+        size_t n = std::max(static_cast<size_t>(1), precision);
+        while (digits.size() > n && !digits.back())
         {
             digits.pop_back();
         }
-        if (digits.empty())
+        size_t i = 0;
+        for (i; i < digits.size() && !digits[i]; ++i)
+            ;
+        digits.erase(digits.begin(), digits.begin() + i);
+        precision -= i;
+        if (digits.empty() || digits.size() == 1 && !digits[0])
         {
-            digits.push_back(0);
-            sign = 1;
+            digits.resize(1);
+            precision = 1;
+            sign = 0;
         }
     }
 
     std::ostream &operator<<(std::ostream &out, const BigNum &a)
     {
         if (a.sign < 0)
+        {
             out << '-';
-
-        size_t integerPartSize = a.digits.size() - a.precision;
-
-        // Print integer part
-        for (size_t i = 0; i < integerPartSize; ++i)
-            out << a.digits[i];
-
+        }
         if (a.precision > 0)
         {
-            out << '.';
-
-            // Print fractional part
-            for (size_t i = integerPartSize; i < a.digits.size(); ++i)
+            size_t i = 0;
+            size_t e = a.precision;
+            while (i < a.digits.size() && i < e)
+            {
+                out << a.digits[i++];
+            }
+            while (i < e)
+            {
+                out << "0";
+                ++i;
+            }
+            if (i < a.digits.size())
+            {
+                out << ".";
+                while (i < a.digits.size())
+                {
+                    out << a.digits[i++];
+                }
+            }
+        }
+        else if (!a.precision)
+        {
+            out << "0.";
+            for (size_t i = 0; i < a.digits.size(); ++i)
                 out << a.digits[i];
         }
-
+        else
+        {
+            out << "0.";
+            size_t exp = -a.precision;
+            for (size_t i = 0; i < exp; ++i)
+            {
+                out << "0";
+            }
+            for (size_t i = 0; i < a.digits.size(); ++i)
+            {
+                out << a.digits[i];
+            }
+        }
         return out;
     }
 
