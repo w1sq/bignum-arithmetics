@@ -5,8 +5,8 @@ int main()
 {
     using namespace LongArithmetics;
 
-    BigNum a("10");
-    BigNum b("3");
+    BigNum a("100.01");
+    BigNum b("0.003");
 
     std::cout << "a = " << a << '\n';
     std::cout << "b = " << b << '\n';

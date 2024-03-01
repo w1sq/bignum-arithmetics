@@ -39,15 +39,14 @@ namespace LongArithmetics
         BigNum operator-() const;
 
         bool is_zero() const;
-        int get_digit(int i) const;
         BigNum inverse() const;
 
         friend std::ostream &operator<<(std::ostream &out, const BigNum &a);
 
     private:
         std::vector<int> digits;
-        int32_t precision;
-        bool sign; // 0 for >=0, 1 for <0
+        int32_t fdigit; // coord of first significant digit
+        bool sign;      // 0 for >=0, 1 for <0
 
         void remove_zeros();
     };

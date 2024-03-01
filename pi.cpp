@@ -1,8 +1,7 @@
+#include <long_arithmetics.hpp>
+
 #include <iostream>
 #include <ctime>
-#include <string>
-
-#include <long_arithmetics.hpp>
 
 using namespace LongArithmetics;
 

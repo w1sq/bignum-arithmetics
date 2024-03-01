@@ -1,4 +1,5 @@
 #include <long_arithmetics.hpp>
+
 #include <iomanip>
 #include <deque>
 
@@ -8,20 +9,20 @@ namespace LongArithmetics
     {
         sign = 0;
         digits = {0};
-        precision = 0;
+        fdigit = 0;
     }
 
     BigNum::BigNum(const std::string &number)
     {
         size_t i = 0;
         sign = number[0] == '-' ? ++i : 0;
-        precision = number.size() - i;
-        digits.reserve(precision);
+        fdigit = number.size() - i;
+        digits.reserve(fdigit);
         while (i < number.size())
         {
             if (number[i] == '.')
             {
-                precision = sign ? i - 1 : i;
+                fdigit = sign ? i - 1 : i;
             }
             else if (isdigit(number[i]))
             {
@@ -31,6 +32,7 @@ namespace LongArithmetics
         }
         remove_zeros();
     }
+
     BigNum::BigNum(long double d)
     {
         std::ostringstream os;
@@ -38,19 +40,19 @@ namespace LongArithmetics
         *this = BigNum(os.str());
     }
 
+    BigNum::BigNum(const BigNum &other)
+        : digits(other.digits), sign(other.sign), fdigit(other.fdigit) {}
+
+    BigNum::BigNum(BigNum &&other)
+        : digits(move(other.digits)), sign(other.sign), fdigit(other.fdigit)
+    {
+        other.sign = 0;
+        other.fdigit = 1;
+    }
+
     BigNum operator""_bn(long double number)
     {
         return BigNum(number);
-    }
-
-    BigNum::BigNum(const BigNum &other)
-        : digits(other.digits), sign(other.sign), precision(other.precision) {}
-
-    BigNum::BigNum(BigNum &&other)
-        : digits(move(other.digits)), sign(other.sign), precision(other.precision)
-    {
-        other.sign = 0;
-        other.precision = 1;
     }
 
     BigNum BigNum::operator-() const
@@ -64,8 +66,8 @@ namespace LongArithmetics
     {
         if (sign != other.sign)
             return sign > other.sign;
-        if (precision != other.precision)
-            return (precision < other.precision) ^ sign;
+        if (fdigit != other.fdigit)
+            return (fdigit < other.fdigit) ^ sign;
         return (digits < other.digits) ^ sign;
     }
 
@@ -77,15 +79,16 @@ namespace LongArithmetics
 
     bool BigNum::operator==(const BigNum &other) const
     {
-        if (this->digits.size() != other.digits.size() || this->precision != other.precision || this->sign != other.sign)
+        if (digits.size() != other.digits.size() || fdigit != other.fdigit || sign != other.sign)
             return false;
-        for (size_t i = 0; i < this->digits.size(); ++i)
+        for (size_t i = 0; i < digits.size(); ++i)
         {
-            if (this->digits[i] != other.digits[i])
+            if (digits[i] != other.digits[i])
                 return false;
         }
         return true;
     }
+
     bool BigNum::operator!=(const BigNum &other) const { return !(*this == other); }
 
     BigNum &BigNum::operator=(const BigNum &other)
@@ -95,7 +98,7 @@ namespace LongArithmetics
             return *this;
         }
         sign = other.sign;
-        precision = other.precision;
+        fdigit = other.fdigit;
         digits = other.digits;
         return *this;
     }
@@ -107,10 +110,10 @@ namespace LongArithmetics
             return *this;
         }
         sign = other.sign;
-        precision = other.precision;
+        fdigit = other.fdigit;
         digits = move(other.digits);
         other.sign = 0;
-        other.precision = 1;
+        other.fdigit = 1;
         return *this;
     }
 
@@ -118,35 +121,35 @@ namespace LongArithmetics
     {
         if (sign == a.sign)
         {
-            auto exp2 = a.precision;
-            auto exp = std::max(precision, exp2);
-            std::deque<int> d1(digits.begin(), digits.end());
-            std::deque<int> d2(a.digits.begin(), a.digits.end());
-            while (precision != exp)
+            auto afdigit = a.fdigit;
+            auto max_fdigit = std::max(fdigit, afdigit);
+            std::deque<int> digits_deq(digits.begin(), digits.end());
+            std::deque<int> a_digits_deq(a.digits.begin(), a.digits.end());
+            while (fdigit != max_fdigit)
             {
-                d1.push_front(0);
-                ++precision;
+                digits_deq.push_front(0);
+                ++fdigit;
             }
-            while (exp2 != exp)
+            while (afdigit != max_fdigit)
             {
-                d2.push_front(0);
-                ++exp2;
+                a_digits_deq.push_front(0);
+                ++afdigit;
             }
-            size_t size = std::max(d1.size(), d2.size());
-            while (d1.size() != size)
+            size_t size = std::max(digits_deq.size(), a_digits_deq.size());
+            while (digits_deq.size() != size)
             {
-                d1.push_back(0);
+                digits_deq.push_back(0);
             }
-            while (d2.size() != size)
+            while (a_digits_deq.size() != size)
             {
-                d2.push_back(0);
+                a_digits_deq.push_back(0);
             }
             size_t len = 1 + size;
-            precision = exp + 1;
+            fdigit = max_fdigit + 1;
             digits = std::vector<int>(len, 0);
             for (size_t i = 0; i < size; ++i)
             {
-                digits[i + 1] = d1[i] + d2[i];
+                digits[i + 1] = digits_deq[i] + a_digits_deq[i];
             }
             for (size_t i = len - 1; i > 0; --i)
             {
@@ -178,46 +181,46 @@ namespace LongArithmetics
         if (!sign && !a.sign)
         {
             bool first_is_bigger = *this > a;
-            auto exp1 = first_is_bigger ? precision : a.precision;
-            auto exp2 = first_is_bigger ? a.precision : precision;
-            auto exp = std::max(exp1, exp2);
-            std::deque<int> d1, d2;
+            auto fdigit1 = first_is_bigger ? fdigit : a.fdigit;
+            auto fdigit2 = first_is_bigger ? a.fdigit : fdigit;
+            auto max_fdigit = std::max(fdigit1, fdigit2);
+            std::deque<int> digits_deq, a_digits_deq;
             if (first_is_bigger)
             {
-                d1 = {digits.begin(), digits.end()};
-                d2 = {a.digits.begin(), a.digits.end()};
+                digits_deq = {digits.begin(), digits.end()};
+                a_digits_deq = {a.digits.begin(), a.digits.end()};
             }
             else
             {
-                d1 = {a.digits.begin(), a.digits.end()};
-                d2 = {digits.begin(), digits.end()};
+                digits_deq = {a.digits.begin(), a.digits.end()};
+                a_digits_deq = {digits.begin(), digits.end()};
             }
-            while (exp1 != exp)
+            while (fdigit1 != max_fdigit)
             {
-                d1.push_front(0);
-                ++exp1;
+                digits_deq.push_front(0);
+                ++fdigit1;
             }
-            while (exp2 != exp)
+            while (fdigit2 != max_fdigit)
             {
-                d2.push_front(0);
-                ++exp2;
+                a_digits_deq.push_front(0);
+                ++fdigit2;
             }
-            size_t size = std::max(d1.size(), d2.size());
-            while (d1.size() != size)
+            size_t size = std::max(digits_deq.size(), a_digits_deq.size());
+            while (digits_deq.size() != size)
             {
-                d1.push_back(0);
+                digits_deq.push_back(0);
             }
-            while (d2.size() != size)
+            while (a_digits_deq.size() != size)
             {
-                d2.push_back(0);
+                a_digits_deq.push_back(0);
             }
             size_t len = 1 + size;
             sign = first_is_bigger ? 0 : 1;
-            precision = exp + 1;
+            fdigit = max_fdigit + 1;
             digits = std::vector<int>(len, 0);
             for (size_t i = 0; i < size; ++i)
             {
-                digits[i + 1] = d1[i] - d2[i];
+                digits[i + 1] = digits_deq[i] - a_digits_deq[i];
             }
             for (size_t i = len - 1; i; --i)
             {
@@ -250,7 +253,7 @@ namespace LongArithmetics
     BigNum &BigNum::operator*=(const BigNum &a)
     {
         sign = sign ^ a.sign;
-        precision = precision + a.precision;
+        fdigit = fdigit + a.fdigit;
         if ((digits.size() + a.digits.size()) < SIMPLE_LIMIT)
         {
             digits = simple_mul(digits, a.digits);
@@ -338,6 +341,7 @@ namespace LongArithmetics
         result.erase(result.begin(), result.begin() + new_size - lhs.size() + new_size - rhs.size());
         return result;
     }
+
     BigNum
     operator*(const BigNum &a, const BigNum &b)
     {
@@ -357,19 +361,19 @@ namespace LongArithmetics
         x.sign = 0;
         BigNum one("1");
         inversed.sign = sign;
-        inversed.precision = 1;
+        inversed.fdigit = 1;
         inversed.digits.clear();
         while (x < one)
         {
-            ++x.precision;
-            ++inversed.precision;
+            ++x.fdigit;
+            ++inversed.fdigit;
         }
         while (one < x)
         {
-            one.precision++;
+            one.fdigit++;
         }
-        inversed.precision -= one.precision - 1;
-        size_t totalNumbers = divDigits + std::max(0, inversed.precision);
+        inversed.fdigit -= one.fdigit - 1;
+        size_t totalNumbers = divDigits + std::max(0, inversed.fdigit);
         size_t numbers = 0;
         do
         {
@@ -379,30 +383,24 @@ namespace LongArithmetics
                 ++div;
                 one -= x;
             }
-            ++one.precision;
+            ++one.fdigit;
             one.remove_zeros();
             inversed.digits.push_back(div);
             ++numbers;
-
         } while (!(one.is_zero()) && numbers < totalNumbers);
-
         return inversed;
     }
 
     BigNum &BigNum::operator/=(const BigNum &a)
     {
         if (is_zero())
-        {
             return *this;
-        }
         *this *= a.inverse();
-        size_t intPart = std::max(0, a.precision);
+        size_t intPart = std::max(0, a.fdigit);
         if (intPart > digits.size() - 1)
-        {
             return *this;
-        }
         size_t i = digits.size() - 1 - intPart;
-        size_t n = std::max(0, precision);
+        size_t n = std::max(0, fdigit);
         if (i > n && digits[i] == 9)
         {
             while (i > n && digits[i] == 9)
@@ -437,7 +435,7 @@ namespace LongArithmetics
 
     void BigNum::remove_zeros()
     {
-        size_t n = std::max(1, precision);
+        size_t n = std::max(1, fdigit);
         while (digits.size() > n && !digits.back())
         {
             digits.pop_back();
@@ -446,11 +444,11 @@ namespace LongArithmetics
         for (i; i < digits.size() && !digits[i]; ++i)
             ;
         digits.erase(digits.begin(), digits.begin() + i);
-        precision -= i;
+        fdigit -= i;
         if (digits.empty() || digits.size() == 1 && !digits[0])
         {
             digits.resize(1);
-            precision = 1;
+            fdigit = 1;
             sign = 0;
         }
     }
@@ -458,13 +456,11 @@ namespace LongArithmetics
     std::ostream &operator<<(std::ostream &out, const BigNum &a)
     {
         if (a.sign)
-        {
             out << '-';
-        }
-        if (a.precision > 0)
+        if (a.fdigit > 0)
         {
             size_t i = 0;
-            size_t e = a.precision;
+            size_t e = a.fdigit;
             while (i < a.digits.size() && i < e)
             {
                 out << a.digits[i++];
@@ -483,7 +479,7 @@ namespace LongArithmetics
                 }
             }
         }
-        else if (!a.precision)
+        else if (!a.fdigit)
         {
             out << "0.";
             for (size_t i = 0; i < a.digits.size(); ++i)
@@ -492,8 +488,8 @@ namespace LongArithmetics
         else
         {
             out << "0.";
-            size_t exp = -a.precision;
-            for (size_t i = 0; i < exp; ++i)
+            size_t min_a_fdigit = -a.fdigit;
+            for (size_t i = 0; i < min_a_fdigit; ++i)
             {
                 out << "0";
             }

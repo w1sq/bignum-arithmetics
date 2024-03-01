@@ -1,5 +1,6 @@
-#include <gtest/gtest.h>
 #include <long_arithmetics.hpp>
+
+#include <gtest/gtest.h>
 
 using namespace LongArithmetics;
 
