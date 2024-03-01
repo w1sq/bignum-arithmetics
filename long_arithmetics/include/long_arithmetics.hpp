@@ -7,7 +7,7 @@
 namespace LongArithmetics
 {
     constexpr size_t SIMPLE_LIMIT = 128;
-    constexpr size_t divDigits = 1000;
+    constexpr size_t divDigits = 100;
     struct BigNum
     {
     public:
@@ -54,6 +54,7 @@ namespace LongArithmetics
 
     std::vector<int> simple_mul(const std::vector<int> &lhs, const std::vector<int> &rhs);
     std::vector<int> karatsuba_mul(const std::vector<int> &lhs, const std::vector<int> &rhs);
-    // BigNum operator"" _bn(const char *str, std::size_t);
-    // BigNum operator"" _bn(long double num);
+    std::string to_string(const BigNum &);
+
+    BigNum operator"" _bn(const long double num);
 } // namespace LongArithmetics

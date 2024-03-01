@@ -2,9 +2,6 @@
 #include <iomanip>
 #include <deque>
 
-constexpr int base = 1000'000'000;
-constexpr int base_digits = 9;
-
 namespace LongArithmetics
 {
     BigNum::BigNum()
@@ -34,6 +31,17 @@ namespace LongArithmetics
         }
         remove_zeros();
     }
+    BigNum::BigNum(long double d)
+    {
+        std::ostringstream os;
+        os << std::setprecision(15) << d;
+        *this = BigNum(os.str());
+    }
+
+    BigNum operator""_bn(long double number)
+    {
+        return BigNum(number);
+    }
 
     BigNum::BigNum(const BigNum &other)
         : digits(other.digits), sign(other.sign), precision(other.precision) {}
@@ -43,12 +51,6 @@ namespace LongArithmetics
     {
         other.sign = 0;
         other.precision = 1;
-    }
-    BigNum::BigNum(long double d)
-    {
-        std::ostringstream os;
-        os << std::setprecision(15) << d;
-        *this = BigNum(os.str());
     }
 
     BigNum BigNum::operator-() const
@@ -503,13 +505,10 @@ namespace LongArithmetics
         return out;
     }
 
-    // BigNum operator"" _bn(const char *str, std::size_t)
-    // {
-    //     return BigNum(str);
-    // }
-
-    // BigNum operator"" _bn(long double num)
-    // {
-    //     return BigNum(num);
-    // }
+    std::string to_string(const BigNum &number)
+    {
+        std::stringstream ss;
+        ss << number;
+        return ss.str();
+    }
 } // namespace LongArithmetics
