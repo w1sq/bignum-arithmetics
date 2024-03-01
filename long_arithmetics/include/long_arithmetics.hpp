@@ -6,14 +6,16 @@
 
 namespace LongArithmetics
 {
+    constexpr size_t SIMPLE_LIMIT = 128;
+    constexpr size_t divDigits = 1000;
     struct BigNum
     {
     public:
         BigNum();
+        explicit BigNum(long double d);
         explicit BigNum(const std::string &number);
-        // explicit BigNum(const std::string &number, size_t precision = static_cast<size_t>(-1));
-        // explicit BigNum(const char *number, size_t precision = static_cast<size_t>(-1));
-        // explicit BigNum(long long number, size_t precision = static_cast<size_t>(-1));
+        BigNum(const BigNum &other);
+        BigNum(BigNum &&other);
 
         bool operator==(const BigNum &other) const;
         bool operator!=(const BigNum &other) const;
@@ -22,6 +24,8 @@ namespace LongArithmetics
         bool operator<=(const BigNum &other) const;
         bool operator>=(const BigNum &other) const;
 
+        BigNum &operator=(const BigNum &other);
+        BigNum &operator=(BigNum &&other);
         BigNum &operator+=(const BigNum &a);
         BigNum &operator-=(const BigNum &a);
         BigNum &operator*=(const BigNum &a);
@@ -36,17 +40,20 @@ namespace LongArithmetics
 
         bool is_zero() const;
         int get_digit(int i) const;
+        BigNum inverse() const;
 
         friend std::ostream &operator<<(std::ostream &out, const BigNum &a);
 
     private:
         std::vector<int> digits;
-        size_t precision;
-        int sign; // 0 for >=0, 1 for <0
+        int32_t precision;
+        bool sign; // 0 for >=0, 1 for <0
 
         void remove_zeros();
     };
 
+    std::vector<int> simple_mul(const std::vector<int> &lhs, const std::vector<int> &rhs);
+    std::vector<int> karatsuba_mul(const std::vector<int> &lhs, const std::vector<int> &rhs);
     // BigNum operator"" _bn(const char *str, std::size_t);
     // BigNum operator"" _bn(long double num);
 } // namespace LongArithmetics
